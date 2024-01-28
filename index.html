@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Unofficial wage reopener calculator</title>
+  </head>
+  <body>
+    <script>
+      function q1Submit() {
+        if (document.getElementById('opseu').checked) {
+          window.union = 'opseu';
+        } else if (document.getElementById('amapceo').checked) {
+          window.union = 'amapceo';
+          document.querySelectorAll('.period').forEach(function (e) {
+            e.innerText = 'yearly';
+          });          document.querySelectorAll('.month').forEach(function (e) {
+            e.innerText = '4';
+          });
+          document.getElementById('date').min = '2022-04-01';
+        } else {
+          window.alert('Please make a selection');
+          return;
+        }
+
+        document.getElementById('date').max = new Date().toISOString().split("T")[0];
+        document.getElementById('q2').style = null;
+        document.getElementById('opseu').disabled = true;
+        document.getElementById('amapceo').disabled = true;
+        document.getElementById('q1btn').remove();
+      }
+
+      function q2Submit() {
+        if (document.getElementById('before').checked) {
+          if (window.union == 'opseu') {
+            window.date = '2022-01-01';
+          } else if (window.union == 'amapceo') {
+            window.date = '2022-04-01';
+          }
+        } else if (document.getElementById('after').checked) {
+          if (!document.getElementById('date').value) {
+            window.alert('Please enter a date');
+          }
+          window.date = document.getElementById('date').value;
+        } else {
+          window.alert('Please make a selection');
+          return;
+        }
+
+        document.getElementById('q3').style = null;
+        document.getElementById('before').disabled = true;
+        document.getElementById('after').disabled = true;
+        document.getElementById('date').disabled = true;
+        document.getElementById('q2btn').remove();
+        window.date = new Date(window.date);
+
+        if (window.union == 'opseu') {
+          document.getElementById('3').style = null;
+          if (window.date < new Date('2024-01-01')) {
+            document.getElementById('2').style = null;
+          }
+          if (window.date < new Date('2023-01-01')) {
+            document.getElementById('1').style = null;
+          }
+        } else if (window.union == 'amapceo') {
+          document.getElementById('2').style = null;
+          if (window.date < new Date('2023-04-01')) {
+            document.getElementById('1').style = null;
+          }
+        }
+      }
+
+      function q3Submit() {
+        let s1 = document.getElementById('1').style.length == 0 ? document.getElementById('s1').value : 0;
+        let s2 = document.getElementById('2').style.length == 0 ? document.getElementById('s2').value : 0;
+        let s3 = document.getElementById('3').style.length == 0 ? document.getElementById('s3').value : 0;
+        let ss1 = Math.round(s1 * 1.02 * 100) / 100;
+        let ss2 = Math.round(s2 * 1.025 * 100) / 100;
+        let ss3 = Math.round(s3 * 1.02 * 100) / 100;
+        document.getElementById('ss1').innerText = ' → ' + ss1;
+        document.getElementById('ss2').innerText = ' → ' + ss2;
+        document.getElementById('ss3').innerText = ' → ' + ss3;
+
+        let result = 0;
+        let curr = new Date(window.date.getTime());
+        while (curr < new Date()) {
+          if (window.union == 'opseu') {
+            if (curr >= new Date('2024-01-01')) {
+              result += ss3 / 7 - s3 / 7;
+            } else if (curr >= new Date('2023-01-01')) {
+              result += ss2 / 7 - s2 / 7;
+            } else if (curr >= new Date('2022-01-01')) {
+              result += ss1 / 7 - s1 / 7;
+            }
+          } else if (window.union == 'amapceo') {
+            if (curr >= new Date('2023-04-01')) {
+              result += ss2 / 365 - s2 / 365;
+            } else if (curr >= new Date('2022-04-01')) {
+              result += ss1 / 365 - s1 / 365;
+            }
+          }
+
+          curr.setDate(curr.getDate() + 1);
+        }
+
+        let low = Math.floor(result / 50) * 50;
+        let high = low + 500;
+        if (ss1 == 0) {
+          high -= 300;
+        }
+
+        document.getElementById('q4').style = null;
+        document.getElementById('low').innerText = low;
+        document.getElementById('high').innerText = high;
+        if (union == 'opseu') {
+          document.getElementById('rate').innerText = ss3;
+        } else if (union == 'amapceo') {
+          document.getElementById('rate').innerText = ss2;
+        }
+      }
+    </script>
+
+    <table border="1">
+      <tbody>
+        <tr>
+          <td>
+            Select your bargaining unit:
+            <input type="radio" id="opseu" name="union" value="opseu">
+            <label for="opseu">OPSEU</label>
+            <input type="radio" id="amapceo" name="union" value="amapceo">
+            <label for="amapceo">AMAPCEO</label>
+            <button id="q1btn" type="button" onclick="q1Submit();">Next ></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table id="q2" style="display:none;" border="1">
+      <tbody>
+        <tr>
+          <td>
+            When did you join the OPS?
+            <input type="radio" id="before" name="date" value="before">
+            <label for="before">Before 2022-0<span class="month">1</span>-01</label>
+            <input type="radio" id="after" name="date" value="after" checked>
+            <label for="after"><input id="date" type="date" min="2022-01-01"></input></label>
+            <button id="q2btn" type="button" onclick="q2Submit();">Next ></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table id="q3" style="display:none;" border="1">
+      <tbody>
+        <tr>
+          <td>
+            Enter your <strong><span class="period">weekly</span></strong> rate as of:
+            <div id="1" style="display:none;">
+              <label for="s1">2022-0<span class="month">1</span>-01</label>
+              <input type="number" id="s1" name="s1" min="0"><span id="ss1" style="color:green;"></span>
+            </div>
+            <div id="2" style="display:none;">
+              <label for="s2">2023-0<span class="month">1</span>-01</label>
+              <input type="number" id="s2" name="s2" min="0"><span id="ss2" style="color:green;"></span>
+            </div>
+            <div id="3" style="display:none;">
+              <label for="s3">2024-0<span class="month">1</span>-01</label>
+              <input type="number" id="s3" name="s3" min="0"><span id="ss3" style="color:green;"></span>
+            </div>
+            <button id="q3btn" type="button" onclick="q3Submit();">Calculate</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table id="q4" style="display:none;" border="1">
+      <tbody>
+        <tr>
+          <td>
+            Your estimated retro pay: $<span id="low"></span>-<span id="high"></span> <sup>[3]</sup><br>
+            Your new <span class="period">weekly</span> rate as of today: $<span id="rate"></span> <sub></sub>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div>
+      <h3>Disclaimers:</h3>
+      <ol>
+        <li>I built this calculator just for fun. I can neither guarantee accuracy nor assume any liability.</li>
+        <li>This tool is <a href="https://github.com/A-Kun/unofficial-wage-reopener-calculator">open-source</a>. I respect your privacy - no analytics, no logs.</li>
+        <li>The retro pay estimation does not take account of the fact that merit date can be in any month.<br>
+            Therefore, the estimation is a displayed as a range.<br>
+            In most cases, the actual amount is somewhere in between the low-point to the mid-point.</li>
+        <!-- The range of 500 is calculated by (120000*1.05*0.02 - 120000*0.02) + (120000*1.05*1.05*0.045 - 120000*1.05*0.045) then rounded up. -->
+        <!-- The range of 200 is calculated by (120000*1.05*0.025 - 120000*0.025) then rounded up. -->
+        <li>All amounts shown are pre-tax and pre-deductions.</li>
+      </ol>
+    </div>
+  </body>
+</html>
